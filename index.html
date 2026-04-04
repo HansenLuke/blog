@@ -1,40 +1,39 @@
 <!DOCTYPE html>
 <html>
  <head>
-    <title>Blog</title>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
+  <title>Blog</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width" />
   <link rel="icon" href="favicon.png">
   <style>
-body {
+    body {
   margin: 0;
   min-height: 100vh;
-  background: white;
+  background:
+    linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)),
+    url("titlescreen.jpeg") center / cover no-repeat;
   color: black;
 }
 
 @media (prefers-color-scheme: dark) {
   body {
-    background: #111;
     color: white;
+    background:
+      linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
+      url("titlescreen.jpeg") center / cover no-repeat;
   }
 }
-
-  background: 
-    linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
-    url("titlescreen.jpeg") center / cover no-repeat;
-
-  color: white;
-}
-   h1, p, li {
+h1, p, li {
   text-shadow: 0 2px 6px rgba(0,0,0,0.7);
 }
-  .credits {
+
+.credits {
   position: fixed;
   bottom: 10px;
   right: 10px;
   text-shadow: 0 2px 6px rgba(0,0,0,0.7);
 }
+
 .top-nav {
   display: flex;
   justify-content: space-between;
@@ -43,12 +42,12 @@ body {
   margin: 0;
   list-style: none;
 }
-}
+
 .uni ul {
   padding-left: 0;
   margin: 0;
 }
-  </style>
+   </style>
   
  </head>
   
