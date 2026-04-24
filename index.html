@@ -43,11 +43,23 @@
     }
     .top-nav {
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: flex-start;
+      gap: 80px;
       padding: 0 20px;
       margin: 0;
       list-style: none;
+    }
+    .top-nav > li {
+      flex: 1;
+      max-width: 300px;
+    }
+    .top-nav > li:nth-child(2) {
+      text-align: center;
+    }
+    .top-nav > li:nth-child(2) ul {
+      text-align: left;
+      display: inline-block;
     }
   </style>
  </head>
@@ -68,8 +80,8 @@
         </ul>
       </li>
 
-      <li style="text-align: center;">
-        <strong>Nur für die größte Diva der Welt</strong>
+      <li>
+        <strong>Nur für die größte Diva der Welt ♥</strong>
         <ul>
           <li><a href="Geburtstag" download="Geburtstag.html">Geburtstag</a></li>
         </ul>
