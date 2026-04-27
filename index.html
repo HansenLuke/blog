@@ -43,22 +43,34 @@
     }
     .top-nav {
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: flex-start;
+      gap: 80px;
       padding: 0 20px;
       margin: 0;
       list-style: none;
     }
+    .top-nav > li {
+      flex: 1;
+      max-width: 400px;
+    }
+    .top-nav > li:nth-child(2) {
+      text-align: center;
+    }
+    .top-nav > li:nth-child(2) ul {
+      text-align: left;
+      display: inline-block;
+    }
   </style>
  </head>
-
+  
  <body>
   <div class="credits">
     Credits für's Hintergrundbild gehen an @MichelleEnns
   </div>
     <h1>Hallöchen</h1>
     <p>klick mal hier, klick mal da...</p>
-
+    
     <ul class="top-nav">
       <li>
         <strong>Alltag</strong>
@@ -66,8 +78,15 @@
          <li><a href="alltag/2026/april/010426.html">01.04.26 - Monster Energy Flavour</a></li>
          <li><a href="alltag/2026/april/040426.html">04.04.26 - HTML &amp; Info</a></li>
         </ul>
-       </li>
+      </li>
 
+      <li>
+        <strong>Nur für die größte Diva der Welt <span style="white-space: nowrap;">♥</span></strong>
+        <ul>
+          <li><a href="Geburtstag" download="Geburtstag.html">Geburtstag</a></li>
+        </ul>
+      </li>
+     
       <li>
         <strong>Uni</strong>
         <ul>
@@ -75,6 +94,6 @@
         </ul>
       </li>
     </ul>
-
+  
  </body>
 </html>
