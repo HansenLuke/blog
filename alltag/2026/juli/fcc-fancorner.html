@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>FCC 95 — Carl Zeiss Jena Desktop</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{
+    --face:#c0c0c0;
+    --face-dark:#808080;
+    --face-darker:#404040;
+    --face-light:#dfdfdf;
+    --face-lighter:#ffffff;
+    --titlebar-a1:#000080;
+    --titlebar-a2:#1084d0;
+    --titlebar-i1:#7f7f7f;
+    --titlebar-i2:#a0a0a0;
+    --desktop:#0a2f5c;
+    --jena-blue:#0d3b73;
+    --jena-yellow:#f4c430;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:var(--desktop);
+    background-image:
+      repeating-linear-gradient(45deg, rgba(244,196,48,0.09) 0 2px, transparent 2px 30px),
+      repeating-linear-gradient(-45deg, rgba(244,196,48,0.09) 0 2px, transparent 2px 30px),
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 15px),
+      repeating-linear-gradient(-45deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 15px);
+    font-family: Tahoma, 'MS Sans Serif', Geneva, sans-serif;
+    font-size:12px;
+    color:#000;
+    min-height:100vh;
+    padding:0 0 40px 0;
+    overflow-x:auto;
+  }
+  .crt-overlay{
+    position:fixed; inset:0; pointer-events:none; z-index:5000;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 3px);
+    mix-blend-mode:multiply; opacity:.55;
+  }
+  #boot{
+    position:fixed; inset:0; z-index:9999; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; background:#000; color:#fff;
+  }
+  #boot .logo{ font-size:24px; font-weight:bold; letter-spacing:3px; font-family:Tahoma,sans-serif;}
+  #boot .sub{ font-size:11px; margin:10px 0 16px; color:#ccc;}
+  #boot .bar{ width:220px; height:14px; overflow:hidden;
+    box-shadow:inset 1px 1px 0 var(--face-darker), inset -1px -1px 0 var(--face-lighter); background:var(--face);}
+  #boot .fill{ height:100%; width:0%; background:linear-gradient(90deg,var(--jena-blue),var(--jena-yellow)); transition:width 1.3s linear;}
+
+  .out{ box-shadow: inset 1px 1px 0 var(--face-lighter), inset -1px -1px 0 var(--face-darker), inset 2px 2px 0 var(--face-light), inset -2px -2px 0 var(--face-dark); background:var(--face);}
+  .in{ box-shadow: inset 1px 1px 0 var(--face-darker), inset -1px -1px 0 var(--face-lighter), inset 2px 2px 0 var(--face-dark), inset -2px -2px 0 var(--face-light); background:var(--face);}
+
+  .desktop-scroll{ min-width:1860px; position:relative; }
+  #desktop{ position:relative; min-height:1260px; padding:16px; }
+
+  .desktop-icons{ position:absolute; left:14px; top:14px; display:flex; flex-direction:column; gap:18px; width:78px; z-index:1;}
+  .dicon{ display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; color:#fff; text-shadow:1px 1px 1px #000; text-align:center;}
+  .dicon .glyph{ width:34px; height:34px; display:flex; align-items:center; justify-content:center; font-size:19px;
+    box-shadow: inset 1px 1px 0 var(--face-lighter), inset -1px -1px 0 var(--face-darker), inset 2px 2px 0 var(--face-light), inset -2px -2px 0 var(--face-dark); background:var(--face);}
+  .dicon span{font-size:11px; line-height:1.2; max-width:78px;}
+
+  .window{
+    position:absolute; border:1px solid #000; background:var(--face); min-width:220px; min-height:120px;
+    box-shadow: inset 1px 1px 0 var(--face-lighter), inset -1px -1px 0 var(--face-darker), inset 2px 2px 0 var(--face-light), inset -2px -2px 0 var(--face-dark);
+    display:flex; flex-direction:column;
+  }
+  .window.hidden{ display:none; }
+  .window .titlebar{
+    display:flex; align-items:center; justify-content:space-between; padding:3px 4px 3px 6px;
+    background:linear-gradient(90deg, var(--titlebar-i1), var(--titlebar-i2)); color:#fff; font-weight:bold; font-size:12px;
+    cursor:move; user-select:none; touch-action:none;
+  }
+  .window.active-win .titlebar{ background:linear-gradient(90deg, var(--titlebar-a1), var(--titlebar-a2)); }
+  .titlebar .ttl{display:flex; align-items:center; gap:5px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;}
+  .winbtns{display:flex; gap:2px;}
+  .winbtns button{
+    width:17px; height:15px; font-size:10px; line-height:1; padding:0; cursor:pointer; background:var(--face); border:none;
+    box-shadow: inset 1px 1px 0 var(--face-lighter), inset -1px -1px 0 var(--face-darker), inset 2px 2px 0 var(--face-light), inset -2px -2px 0 var(--face-dark);
+    font-family:Tahoma, sans-serif; font-weight:bold;
+  }
+  .winbtns button:active{ box-shadow: inset 1px 1px 0 var(--face-darker), inset -1px -1px 0 var(--face-lighter); }
+  .menubar{ display:flex; gap:12px; padding:2px 8px; border-bottom:1px solid var(--face-dark); font-size:11.5px; background:var(--face); flex-shrink:0;}
+  .menubar span{padding:1px 4px;}
+  .content{ padding:8px; background:var(--face); font-size:12px; overflow:auto; flex:1; }
+  .content.white{ background:#fff; margin:6px; padding:6px; }
+
+  table.kader{ width:100%; border-collapse:collapse; font-size:11.5px; }
+  table.kader th{ text-align:left; background:var(--face); border-bottom:1px solid var(--face-dark); padding:2px 4px; font-weight:bold; }
+  table.kader td{ padding:2px 4px; border-bottom:1px solid #e0e0e0; }
+  table.kader tr:nth-child(even) td{ background:#eef2f2; }
+
+  .blank-row{ display:flex; justify-content:space-between; font-family:'Courier New', monospace; font-size:12px; padding:3px 4px; border-bottom:1px solid var(--face-dark);}
+  .blank-row.head{ font-weight:bold; border-bottom:2px solid #000; }
+  .cursor{ display:inline-block; width:7px; background:#000; animation:blink 1s steps(1) infinite; }
+  @keyframes blink{ 50%{ opacity:0; } }
+  .status-banner{ background:#000; color:#33ff33; font-family:'Courier New', monospace; font-size:12px; padding:6px 8px; margin-top:8px;
+    box-shadow:inset 1px 1px 0 #000, inset -1px -1px 0 #444; }
+
+  .fixture{ display:flex; gap:8px; padding:6px 4px; border-bottom:1px dotted var(--face-dark); font-size:12px; align-items:flex-start;}
+  .fixture .date{ font-family:'Courier New', monospace; font-weight:bold; width:96px; flex-shrink:0; }
+  .fixture.today{ background:var(--jena-yellow); }
+  .fixture.final{ background:#cdeccd; }
+  .month-head{ font-family:'Courier New', monospace; font-weight:bold; font-size:11px; letter-spacing:1px; color:var(--jena-blue); background:#eef2f2; padding:3px 6px; margin-top:4px; }
+
+  .pitch-wrap{ padding:8px; }
+  .pitch{ position:relative; width:100%; aspect-ratio: 3/4; background: repeating-linear-gradient(180deg, #2e8b3d 0 34px, #339542 34px 68px); border:3px solid #e8f0e8; overflow:hidden;}
+  .pitch .line{ position:absolute; background:#e8f0e8; opacity:.85; }
+  .pitch .center-circle{ position:absolute; left:50%; top:50%; width:26%; aspect-ratio:1; border:2px solid #e8f0e8; border-radius:50%; transform:translate(-50%,-50%); opacity:.85;}
+  .pitch .center-line{ left:0; right:0; top:50%; height:2px; }
+  .pitch .box-top{ left:22%; right:22%; top:0; height:12%; border:2px solid #e8f0e8; background:transparent !important; opacity:.85;}
+  .pitch .box-bottom{ left:22%; right:22%; bottom:0; height:12%; border:2px solid #e8f0e8; background:transparent !important; opacity:.85;}
+  .player{ position:absolute; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:2px;}
+  .player .dot{ width:22px; height:22px; border-radius:50%; background:var(--jena-blue); color:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:10px; font-weight:bold; border:2px solid var(--jena-yellow); box-shadow:1px 1px 2px rgba(0,0,0,.5);}
+  .player .lbl{ font-size:9.5px; color:#fff; text-shadow:1px 1px 1px #000; background:rgba(0,0,0,.35); padding:0 3px; white-space:nowrap;}
+  .formation-note{ font-size:11px; padding:6px 8px 2px; color:#333; }
+  .subs-box{ margin:6px 8px 4px; border-top:1px dashed var(--face-dark); padding-top:6px; }
+  .subs-head{ font-family:'Courier New', monospace; font-size:10.5px; letter-spacing:1px; color:var(--jena-blue); font-weight:bold; margin-bottom:3px; }
+  .subs-empty{ font-size:11px; color:#888; font-style:italic; }
+  .subs-row{ font-size:12px; padding:2px 0; }
+
+  .ticker-wrap{ overflow:hidden; background:#000; margin:6px; }
+  .ticker-line{ display:inline-block; white-space:nowrap; padding:6px 0; font-family:'Courier New',monospace; font-size:13px; color:#33ff33; animation: tickerScroll 30s linear infinite;}
+  .ticker-line a{ color:#33ff33; text-decoration:none; }
+  .ticker-line a:hover{ text-decoration:underline; color:#9dffb8; }
+  .ticker-line a:visited{ color:#33ff33; }
+  @keyframes tickerScroll{ from{transform:translateX(0);} to{transform:translateX(-50%);} }
+
+  .archive-text{ font-family:'Courier New', monospace; font-size:11.5px; line-height:1.6; white-space:pre-wrap; }
+
+  .linklist{ display:flex; flex-direction:column; }
+  .linklist a{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:6px 8px; text-decoration:none; color:#000; font-size:12.5px;
+    border-bottom:1px dotted #ccc;
+  }
+  .linklist a:last-child{ border-bottom:none; }
+  .linklist a:hover{ background:var(--titlebar-a1); color:#fff; }
+  .linklist a .go{ font-size:11px; opacity:.7; }
+
+  .stat-match{ background:#000; color:#33ff33; font-family:'Courier New', monospace; font-size:12px; padding:8px; }
+  .stat-head{ font-weight:bold; border-bottom:1px dashed #33ff33; padding-bottom:4px; margin-bottom:6px; display:flex; justify-content:space-between; }
+  .stat-line{ padding:2px 0; }
+  .stat-line.dim{ color:#1f8f1f; font-style:italic; }
+  .stat-topscorer{ margin-top:8px; font-family:'Courier New', monospace; font-size:11px; color:#333; }
+
+  .sp-navbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; font-family:'Courier New', monospace; font-size:11px; }
+  .sp-btn{
+    font-family:Tahoma, sans-serif; font-size:11px; padding:3px 8px; cursor:pointer; background:var(--face); border:none;
+    box-shadow: inset 1px 1px 0 var(--face-lighter), inset -1px -1px 0 var(--face-darker), inset 2px 2px 0 var(--face-light), inset -2px -2px 0 var(--face-dark);
+  }
+  .sp-btn:active{ box-shadow: inset 1px 1px 0 var(--face-darker), inset -1px -1px 0 var(--face-lighter); }
+  .sp-btn:disabled{ color:#999; cursor:default; }
+
+  .report-link{ margin:8px 0 4px; }
+  .report-link a{
+    display:inline-block; font-size:11.5px; color:var(--jena-blue); text-decoration:none;
+    border-bottom:1px dotted var(--jena-blue);
+  }
+  .report-link a:hover{ color:#000; }
+
+  .stat-block-mini{ margin-top:10px; }
+  .stat-mini-label{ font-family:'Courier New', monospace; font-size:10.5px; letter-spacing:1px; color:var(--jena-blue); font-weight:bold; margin-bottom:4px; }
+  .stat-mini-note{ font-size:10.5px; color:#555; margin-top:4px; line-height:1.4; }
+
+  .poss-bar{ display:flex; height:14px; border:1px solid #000; overflow:hidden; }
+  .poss-fcc{ background:var(--jena-blue); }
+  .poss-geg{ background:var(--jena-yellow); }
+  .poss-legend{ display:flex; justify-content:space-between; font-size:10px; color:#333; margin-top:2px; }
+
+  .momentum-item{ display:flex; gap:8px; font-size:11px; padding:2px 0; }
+  .momentum-item .mm-min{ font-family:'Courier New', monospace; font-weight:bold; color:var(--jena-blue); width:34px; flex-shrink:0; }
+
+  .momentum-chart{
+    display:flex; align-items:center; gap:3px; height:76px; position:relative;
+    border-top:1px solid #ccc; padding-top:2px;
+  }
+  .momentum-chart::before{
+    content:""; position:absolute; left:0; right:0; top:38px; height:1px; background:#999;
+  }
+  .momentum-col{ flex:1; position:relative; height:100%; }
+  .momentum-col .bar{ position:absolute; left:1px; right:1px; }
+  .momentum-col .bar.fcc{ background:var(--jena-blue); bottom:50%; }
+  .momentum-col .bar.geg{ background:var(--jena-yellow); top:50%; }
+  .momentum-axis{ display:flex; justify-content:space-between; font-size:9.5px; color:#666; margin-top:3px; }
+
+  @keyframes ssScorePop{
+    0%{ transform:scale(1); }
+    40%{ transform:scale(1.6); text-shadow:0 0 18px rgba(244,196,48,.9); }
+    100%{ transform:scale(1); }
+  }
+  #ss-score.pop{ animation: ssScorePop .5s ease; display:inline-block; }
+
+  .resize-handle{
+    position:absolute; right:0; bottom:0; width:14px; height:14px; cursor:nwse-resize;
+    background: linear-gradient(135deg, transparent 50%, var(--face-dark) 50%);
+  }
+
+  .jersey-row{ display:flex; gap:14px; justify-content:center; padding:10px; }
+  .jersey-cap{ font-size:11px; text-align:center; margin-top:4px; }
+
+  .taskbar{
+    position:fixed; left:0; right:0; bottom:0; height:36px; display:flex; align-items:center; gap:6px;
+    padding:0 6px; z-index:6000; background:var(--face);
+    box-shadow: inset 1px 1px 0 var(--face-lighter), inset -1px 0 0 var(--face-dark);
+    border-top:1px solid var(--face-lighter);
+  }
+  .start-btn{ display:flex; align-items:center; gap:5px; padding:3px 10px 3px 6px; font-weight:bold; font-size:12.5px; cursor:pointer;
+    box-shadow: inset 1px 1px 0 var(--face-lighter), inset -1px -1px 0 var(--face-darker), inset 2px 2px 0 var(--face-light), inset -2px -2px 0 var(--face-dark);}
+  .start-btn .flag{ width:16px; height:16px; background: linear-gradient(135deg, var(--jena-blue) 50%, var(--jena-yellow) 50%); display:inline-block;}
+  .taskbar .sep{ width:1px; height:24px; box-shadow: inset -1px 0 0 var(--face-dark), inset 1px 0 0 var(--face-lighter);}
+  .task-item{ padding:3px 10px; font-size:11.5px; cursor:pointer; max-width:150px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
+    box-shadow: inset 1px 1px 0 var(--face-lighter), inset -1px -1px 0 var(--face-darker), inset 2px 2px 0 var(--face-light), inset -2px -2px 0 var(--face-dark);}
+  .task-item.pressed{ box-shadow: inset 1px 1px 0 var(--face-darker), inset -1px -1px 0 var(--face-lighter);}
+  .task-item.hidden{ display:none; }
+  .tray{ margin-left:auto; display:flex; align-items:center; gap:8px; padding:2px 8px; font-size:11.5px;
+    box-shadow: inset 1px 1px 0 var(--face-darker), inset -1px -1px 0 var(--face-lighter); height:24px;}
+
+  #startmenu{
+    position:fixed; left:4px; bottom:38px; width:200px; z-index:7000; display:none;
+    box-shadow: inset 1px 1px 0 var(--face-lighter), inset -1px -1px 0 var(--face-darker), inset 2px 2px 0 var(--face-light), inset -2px -2px 0 var(--face-dark);
+    background:var(--face);
+  }
+  #startmenu .smhead{ background:linear-gradient(180deg,var(--jena-blue),#082647); color:#fff; padding:8px; font-weight:bold; font-size:13px;}
+  #startmenu .smitem{ padding:6px 10px; font-size:12px; cursor:pointer; display:flex; gap:8px; align-items:center;}
+  #startmenu .smitem:hover{ background:var(--titlebar-a1); color:#fff; }
+  #startmenu hr{ border:none; border-top:1px solid var(--face-dark); border-bottom:1px solid var(--face-lighter); margin:2px 0;}
+
+  @media (max-width:760px){
+    .desktop-scroll{ min-width:0; }
+    #desktop{ padding:10px 10px 10px 96px; min-height:0;}
+    .window{ position:static !important; width:100% !important; height:auto !important; margin-bottom:14px; }
+    .resize-handle{ display:none; }
+    .desktop-icons{ position:absolute; left:8px; top:10px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="boot" class="out">
+  <div class="logo">FCC 95</div>
+  <div class="sub">Carl&nbsp;Zeiss&nbsp;Jena&nbsp;OS wird geladen …</div>
+  <div class="bar"><div class="fill" id="bootfill"></div></div>
+</div>
+<div class="crt-overlay"></div>
+
+<div class="desktop-scroll">
+<div id="desktop">
+
+  <div class="desktop-icons">
+    <div class="dicon" onclick="openWin('win-kader')"><div class="glyph">🧾</div><span>Kader.exe</span></div>
+    <div class="dicon" onclick="openWin('win-aufstellung')"><div class="glyph">⚽</div><span>Aufstellung.exe</span></div>
+    <div class="dicon" onclick="openWin('win-tabelle')"><div class="glyph">📊</div><span>Tabelle.exe</span></div>
+    <div class="dicon" onclick="openWin('win-termine')"><div class="glyph">🗓️</div><span>Termine.exe</span></div>
+    <div class="dicon" onclick="openWin('win-trikot')"><div class="glyph">👕</div><span>Trikots.exe</span></div>
+    <div class="dicon" onclick="openWin('win-ticker')"><div class="glyph">📡</div><span>Live-Feed.exe</span></div>
+    <div class="dicon" onclick="openWin('win-spieltage')"><div class="glyph">📋</div><span>Spieltage.exe</span></div>
+    <div class="dicon" onclick="openWin('win-stats')"><div class="glyph">🥅</div><span>Statistik.exe</span></div>
+    <div class="dicon" onclick="openWin('win-archiv')"><div class="glyph">🗑️</div><span>Saison_25-26.zip</span></div>
+  </div>
+
+  <!-- KADER -->
+  <div class="window" id="win-kader" style="left:120px; top:20px; width:380px; height:330px;">
+    <div class="titlebar"><div class="ttl">🧾 Kader.exe — FCC Kaderliste 2026/27</div>
+      <div class="winbtns"><button onclick="minWin('win-kader')">_</button><button onclick="maxWin('win-kader', this)">□</button><button onclick="closeWin('win-kader')">✕</button></div></div>
+    <div class="menubar"><span>Datei</span><span>Ansicht</span><span>Position</span><span>?</span></div>
+    <div class="content white">
+      <table class="kader">
+        <tr><th>Pos.</th><th>Name</th><th>Alter</th></tr>
+        <tr><td>TW</td><td>M. Liesegang</td><td>26</td></tr>
+        <tr><td>TW</td><td>L. Mengel</td><td>17</td></tr>
+        <tr><td>AB</td><td>N. Butzen</td><td>33</td></tr>
+        <tr><td>AB</td><td>M. Hehne</td><td>29</td></tr>
+        <tr><td>AB</td><td>M. Hessel</td><td>21</td></tr>
+        <tr><td>AB</td><td>M. Hoppe</td><td>26</td></tr>
+        <tr><td>AB</td><td>P. Kampe</td><td>20</td></tr>
+        <tr><td>AB</td><td>S. Reddemann</td><td>30</td></tr>
+        <tr><td>AB</td><td>M. Talabidi</td><td>24</td></tr>
+        <tr><td>MF</td><td>O. Aghatise</td><td>23</td></tr>
+        <tr><td>MF</td><td>D. Ajvazi</td><td>22</td></tr>
+        <tr><td>MF</td><td>M. Fritz</td><td>32</td></tr>
+        <tr><td>MF</td><td>P. Krämer</td><td>19</td></tr>
+        <tr><td>MF</td><td>J. Kratzenberg</td><td>19</td></tr>
+        <tr><td>MF</td><td>J. Werner</td><td>20</td></tr>
+        <tr><td>ST</td><td>T. Burmeister</td><td>23</td></tr>
+        <tr><td>ST</td><td>M. Eshele</td><td>27</td></tr>
+        <tr><td>ST</td><td>K. Lankford</td><td>27</td></tr>
+        <tr><td>ST</td><td>E. Löder</td><td>26</td></tr>
+        <tr><td>ST</td><td>A. Suljic</td><td>27</td></tr>
+        <tr><td>ST</td><td>N. Wähling</td><td>28</td></tr>
+        <tr><td>ST</td><td>B. Walter</td><td>18</td></tr>
+        <tr><td>ST</td><td>L. Wollschläger</td><td>23</td></tr>
+      </table>
+      <div style="font-size:10.5px; color:#333; margin-top:4px;">22 Spieler geladen · Cheftrainer: Marco Grote (im Verein seit 2026)</div>
+    </div>
+    <div class="resize-handle"></div>
+  </div>
+
+  <!-- AUFSTELLUNG -->
+  <div class="window" id="win-aufstellung" style="left:520px; top:20px; width:380px; height:590px;">
+    <div class="titlebar"><div class="ttl">⚽ Aufstellung.exe — Spielberichte</div>
+      <div class="winbtns"><button onclick="minWin('win-aufstellung')">_</button><button onclick="maxWin('win-aufstellung', this)">□</button><button onclick="closeWin('win-aufstellung')">✕</button></div></div>
+    <div class="menubar"><span>Datei</span><span>System</span><span>Verlauf</span></div>
+    <div class="content">
+      <div class="sp-navbar">
+        <button class="sp-btn" id="au-prev" onclick="auNav(-1)">◄ zurück</button>
+        <span id="au-nav">SPIEL 1 VON 1</span>
+        <button class="sp-btn" id="au-next" onclick="auNav(1)">weiter ►</button>
+      </div>
+      <div class="pitch-wrap">
+        <div class="pitch">
+          <div class="line center-line"></div>
+          <div class="center-circle"></div>
+          <div class="box-top"></div>
+          <div class="box-bottom"></div>
+          <div id="au-players"></div>
+        </div>
+        <div class="formation-note" id="au-note"></div>
+        <div class="subs-box">
+          <div class="subs-head">EINGEWECHSELT</div>
+          <div id="au-subs"></div>
+        </div>
+      </div>
+    </div>
+    <div class="resize-handle"></div>
+  </div>
+
+  <!-- TRIKOT -->
+  <div class="window" id="win-trikot" style="left:715px; top:640px; width:220px; height:300px;">
+    <div class="titlebar"><div class="ttl">👕 Trikots.exe</div>
+      <div class="winbtns"><button onclick="minWin('win-trikot')">_</button><button onclick="maxWin('win-trikot', this)">□</button><button onclick="closeWin('win-trikot')">✕</button></div></div>
+    <div class="menubar"><span>Datei</span><span>Kollektion</span></div>
+    <div class="content white">
+      <div class="jersey-row">
+        <div>
+          <svg width="80" height="74" viewBox="0 0 80 74">
+            <defs>
+              <pattern id="karo" width="10" height="10" patternUnits="userSpaceOnUse">
+                <rect width="10" height="10" fill="#f4c430"/>
+                <rect width="5" height="5" fill="#0d3b73"/>
+                <rect x="5" y="5" width="5" height="5" fill="#0d3b73"/>
+              </pattern>
+            </defs>
+            <path d="M20 8 L32 2 L40 10 L48 2 L60 8 L72 20 L62 30 L58 26 V66 H22 V26 L18 30 L8 20 Z" fill="url(#karo)" stroke="#000" stroke-width="1.5"/>
+            <text x="40" y="48" text-anchor="middle" font-family="Tahoma,sans-serif" font-size="17" font-weight="bold" fill="#fff" stroke="#000" stroke-width="0.5">9</text>
+          </svg>
+          <div class="jersey-cap">Heim 26/27<br>Karo-Design</div>
+        </div>
+        <div>
+          <svg width="80" height="74" viewBox="0 0 80 74">
+            <path d="M20 8 L32 2 L40 10 L48 2 L60 8 L72 20 L62 30 L58 26 V66 H22 V26 L18 30 L8 20 Z" fill="#f7f7f2" stroke="#0d3b73" stroke-width="2"/>
+            <rect x="22" y="26" width="36" height="8" fill="#0d3b73"/>
+            <text x="40" y="48" text-anchor="middle" font-family="Tahoma,sans-serif" font-size="17" font-weight="bold" fill="#0d3b73">9</text>
+          </svg>
+          <div class="jersey-cap">Auswärts<br>Weiß/Blau</div>
+        </div>
+      </div>
+      <div style="font-size:10.5px; color:#333; text-align:center;">Eigene Illustrationen, angelehnt an das neue Karo-Heimtrikot der Saison 26/27 — keine Sponsorenlogos.</div>
+    </div>
+    <div class="resize-handle"></div>
+  </div>
+
+  <!-- TABELLE -->
+  <div class="window" id="win-tabelle" style="left:990px; top:20px; width:300px; height:220px;">
+    <div class="titlebar"><div class="ttl">📊 Tabelle.exe</div>
+      <div class="winbtns"><button onclick="minWin('win-tabelle')">_</button><button onclick="maxWin('win-tabelle', this)">□</button><button onclick="closeWin('win-tabelle')">✕</button></div></div>
+    <div class="menubar"><span>Datei</span><span>Saison 26/27</span></div>
+    <div class="content">
+      <div class="blank-row head"><span>Platz</span><span>Sp</span><span>S-U-N</span><span>Tore</span><span>Pkt</span></div>
+      <div class="blank-row"><span>— FCC —</span><span>0</span><span>0-0-0</span><span>0:0</span><span>0</span></div>
+      <div class="status-banner">SAISON 2026/27 · NOCH KEINE SPIELE<br>1. SPIELTAG: SO 26.07.2026, 14 UHR VS. FSV ZWICKAU<br>WARTE AUF ANPFIFF<span class="cursor">&nbsp;</span></div>
+    </div>
+    <div class="resize-handle"></div>
+  </div>
+
+  <!-- TERMINE -->
+  <div class="window" id="win-termine" style="left:1410px; top:10px; width:420px; height:420px;">
+    <div class="titlebar"><div class="ttl">🗓️ Termine.exe</div>
+      <div class="winbtns"><button onclick="minWin('win-termine')">_</button><button onclick="maxWin('win-termine', this)">□</button><button onclick="closeWin('win-termine')">✕</button></div></div>
+    <div class="menubar"><span>Datei</span><span>Kalender</span></div>
+    <div class="content white">
+      <div class="month-head">JULI 2026</div>
+      <div class="fixture final"><div class="date">SO<br>12.07.<br>ENDE</div><div><b>FCC 2:0 Union Berlin</b> (Test, KW28) — Löder (11'), Lankford (83')</div></div>
+      <div class="fixture"><div class="date">FR<br>17.07.<br>18:00</div><div>Test, KW29: SpVgg Bayreuth — FCC</div></div>
+      <div class="fixture today"><div class="date">SO<br>26.07.<br>14:00</div><div><b>1. Spieltag:</b> FCC — FSV Zwickau</div></div>
+      <div class="fixture"><div class="date">FR<br>31.07.<br>19:00</div><div><b>2. Spieltag:</b> SV Babelsberg 03 — FCC</div></div>
+
+      <div class="month-head">AUGUST 2026</div>
+      <div class="fixture"><div class="date">SA<br>01.08.<br>18:00</div><div>Test, KW31: FCC — Bayer 04 Leverkusen</div></div>
+      <div class="fixture"><div class="date">MI<br>05.08.<br>19:00</div><div><b>3. Spieltag:</b> FCC — RSV Eintracht</div></div>
+      <div class="fixture"><div class="date">SO<br>09.08.<br>14:00</div><div><b>4. Spieltag:</b> Thüringen-Derby FCC — Rot-Weiß Erfurt</div></div>
+      <div class="fixture"><div class="date">SO<br>16.08.<br>14:00</div><div><b>5. Spieltag:</b> BSG Chemie Leipzig — FCC</div></div>
+      <div class="fixture"><div class="date">SO<br>23.08.<br>15:30</div><div>DFB-Pokal 1. Runde: FCC — SV Darmstadt 98</div></div>
+      <div class="fixture"><div class="date">MI<br>26.08.<br>19:00</div><div><b>6. Spieltag:</b> FCC — VSG Altglienicke</div></div>
+      <div class="fixture"><div class="date">SO<br>30.08.<br>14:00</div><div><b>7. Spieltag:</b> Chemnitzer FC — FCC</div></div>
+
+      <div class="month-head">SEPTEMBER 2026</div>
+      <div class="fixture"><div class="date">SO<br>13.09.<br>14:00</div><div><b>8. Spieltag:</b> FCC — Hertha BSC II</div></div>
+      <div class="fixture"><div class="date">MI<br>16.09.<br>19:00</div><div><b>9. Spieltag:</b> Hallescher FC — FCC</div></div>
+      <div class="fixture"><div class="date">SO<br>20.09.<br>14:00</div><div><b>10. Spieltag:</b> FCC — 1. FC Lok Leipzig</div></div>
+      <div class="fixture"><div class="date">SO<br>27.09.<br>14:00</div><div><b>11. Spieltag:</b> Tasmania Berlin — FCC</div></div>
+
+      <div class="month-head">OKTOBER 2026</div>
+      <div class="fixture"><div class="date">SO<br>11.10.<br>14:00</div><div><b>12. Spieltag:</b> FCC — 1. FC Magdeburg II</div></div>
+      <div class="fixture"><div class="date">SO<br>18.10.<br>14:00</div><div><b>13. Spieltag:</b> FSV Luckenwalde — FCC</div></div>
+      <div class="fixture"><div class="date">SO<br>25.10.<br>14:00</div><div><b>14. Spieltag:</b> FCC — BFC Dynamo</div></div>
+
+      <div class="month-head">NOVEMBER 2026</div>
+      <div class="fixture"><div class="date">SO<br>01.11.<br>14:00</div><div><b>15. Spieltag:</b> Erzgebirge Aue — FCC</div></div>
+      <div class="fixture"><div class="date">SO<br>08.11.<br>14:00</div><div><b>16. Spieltag:</b> FCC — BFC Preussen</div></div>
+      <div class="fixture"><div class="date">SO<br>22.11.<br>14:00</div><div><b>17. Spieltag:</b> Greifswalder FC — FCC</div></div>
+      <div class="fixture"><div class="date">SO<br>29.11.<br>14:00</div><div><b>18. Spieltag:</b> FSV Zwickau — FCC</div></div>
+
+      <div class="month-head">DEZEMBER 2026</div>
+      <div class="fixture"><div class="date">SO<br>06.12.<br>14:00</div><div><b>19. Spieltag:</b> FCC — SV Babelsberg 03</div></div>
+      <div class="fixture"><div class="date">SO<br>13.12.<br>14:00</div><div><b>20. Spieltag:</b> RSV Eintracht — FCC</div></div>
+
+      <div class="month-head">FEBRUAR 2027</div>
+      <div class="fixture"><div class="date">SO<br>14.02.<br>14:00</div><div><b>21. Spieltag:</b> Rot-Weiß Erfurt — FCC</div></div>
+      <div class="fixture"><div class="date">SO<br>21.02.<br>14:00</div><div><b>22. Spieltag:</b> FCC — BSG Chemie Leipzig</div></div>
+      <div class="fixture"><div class="date">SO<br>28.02.<br>14:00</div><div><b>23. Spieltag:</b> VSG Altglienicke — FCC</div></div>
+
+      <div class="month-head">MÄRZ 2027</div>
+      <div class="fixture"><div class="date">SO<br>07.03.<br>14:00</div><div><b>24. Spieltag:</b> FCC — Chemnitzer FC</div></div>
+      <div class="fixture"><div class="date">SO<br>14.03.<br>14:00</div><div><b>25. Spieltag:</b> Hertha BSC II — FCC</div></div>
+      <div class="fixture"><div class="date">SO<br>21.03.<br>14:00</div><div><b>26. Spieltag:</b> FCC — Hallescher FC</div></div>
+
+      <div class="month-head">APRIL 2027</div>
+      <div class="fixture"><div class="date">SO<br>04.04.<br>14:00</div><div><b>27. Spieltag:</b> 1. FC Lok Leipzig — FCC</div></div>
+      <div class="fixture"><div class="date">MI<br>07.04.<br>19:00</div><div><b>28. Spieltag:</b> FCC — Tasmania Berlin</div></div>
+      <div class="fixture"><div class="date">SO<br>11.04.<br>14:00</div><div><b>29. Spieltag:</b> 1. FC Magdeburg II — FCC</div></div>
+      <div class="fixture"><div class="date">SO<br>18.04.<br>14:00</div><div><b>30. Spieltag:</b> FCC — FSV Luckenwalde</div></div>
+      <div class="fixture"><div class="date">SO<br>25.04.<br>14:00</div><div><b>31. Spieltag:</b> BFC Dynamo — FCC</div></div>
+
+      <div class="month-head">MAI 2027</div>
+      <div class="fixture"><div class="date">SO<br>09.05.<br>14:00</div><div><b>32. Spieltag:</b> FCC — Erzgebirge Aue</div></div>
+      <div class="fixture"><div class="date">SO<br>16.05.<br>14:00</div><div><b>33. Spieltag:</b> BFC Preussen — FCC</div></div>
+      <div class="fixture"><div class="date">SO<br>23.05.<br>14:00</div><div><b>34. Spieltag:</b> FCC — Greifswalder FC</div></div>
+
+      <div style="font-size:10px; color:#404040; padding:4px 4px 0;">Kompletter Spielplan — alle 34 Spieltage plus Tests und DFB-Pokal.</div>
+    </div>
+    <div class="resize-handle"></div>
+  </div>
+
+  <!-- LIVE FEED / TICKER -->
+  <div class="window" id="win-ticker" style="left:1410px; top:750px; width:420px; height:230px;">
+    <div class="titlebar"><div class="ttl">📡 Live-Feed.exe — FCC Newsticker</div>
+      <div class="winbtns"><button onclick="minWin('win-ticker')">_</button><button onclick="maxWin('win-ticker', this)">□</button><button onclick="closeWin('win-ticker')">✕</button></div></div>
+    <div class="menubar"><span>Datei</span><span>Favoriten</span></div>
+    <div class="content">
+      <div class="ticker-wrap" style="margin-bottom:8px;">
+        <span class="ticker-line">📡&nbsp; ECHTE LINKS ZUM VEREIN — KLICK ÖFFNET X, INSTAGRAM, FACEBOOK &amp; DIE FCC-WEBSITE IN NEUEM TAB &nbsp;&nbsp;📡&nbsp; ECHTE LINKS ZUM VEREIN — KLICK ÖFFNET X, INSTAGRAM, FACEBOOK &amp; DIE FCC-WEBSITE IN NEUEM TAB &nbsp;&nbsp;</span>
+      </div>
+      <div class="content white" style="margin:0;">
+        <div class="linklist">
+          <a href="https://www.fc-carlzeiss-jena.com/" target="_blank" rel="noopener">🌐 Offizielle Website<span class="go">↗</span></a>
+          <a href="https://x.com/fccarlzeissjena" target="_blank" rel="noopener">🐦 X / Twitter<span class="go">↗</span></a>
+          <a href="https://www.instagram.com/fccarlzeissjena_official/" target="_blank" rel="noopener">📸 Instagram<span class="go">↗</span></a>
+          <a href="https://www.kicker.de/carl-zeiss-jena/info" target="_blank" rel="noopener">📊 kicker.de<span class="go">↗</span></a>
+        </div>
+      </div>
+      <div style="font-size:10px; color:#404040; padding:2px 6px 0;">Direktlinks statt eingebettetem Feed.</div>
+    </div>
+    <div class="resize-handle"></div>
+  </div>
+
+  <!-- SPIELTAGE -->
+  <div class="window" id="win-spieltage" style="left:120px; top:400px; width:340px; height:540px;">
+    <div class="titlebar"><div class="ttl">📋 Spieltage.exe — Spielberichte</div>
+      <div class="winbtns"><button onclick="minWin('win-spieltage')">_</button><button onclick="maxWin('win-spieltage', this)">□</button><button onclick="closeWin('win-spieltage')">✕</button></div></div>
+    <div class="menubar"><span>Datei</span><span>Verlauf</span></div>
+    <div class="content">
+      <div class="sp-navbar">
+        <button class="sp-btn" id="sp-prev" onclick="spNav(-1)">◄ zurück</button>
+        <span id="sp-nav">SPIEL 1 VON 1</span>
+        <button class="sp-btn" id="sp-next" onclick="spNav(1)">weiter ►</button>
+      </div>
+      <div class="stat-match">
+        <div class="stat-head"><span id="sp-teams">FCC — Union Berlin</span><span id="sp-comp">TESTSPIEL</span></div>
+        <div id="sp-date" style="margin-bottom:4px; color:#8f8;">12.07.2026</div>
+        <div id="sp-score" style="font-size:20px; font-weight:bold; margin-bottom:6px;">2:0</div>
+        <div id="sp-scorers"></div>
+      </div>
+      <div id="sp-report-link" class="report-link"></div>
+
+      <div class="stat-block-mini">
+        <div class="stat-mini-label">BALLBESITZ</div>
+        <div class="poss-bar"><div class="poss-fcc" id="sp-poss-fcc"></div><div class="poss-geg" id="sp-poss-geg"></div></div>
+        <div class="poss-legend"><span>FCC</span><span id="sp-poss-geg-label">Gegner</span></div>
+        <div class="stat-mini-note" id="sp-poss-note"></div>
+      </div>
+
+      <div class="stat-block-mini">
+        <div class="stat-mini-label">SCHÜSSE / AUFS TOR</div>
+        <div class="stat-line dim" id="sp-shots-note"></div>
+      </div>
+
+      <div class="stat-block-mini">
+        <div class="stat-mini-label">xGOALS / xASSISTS</div>
+        <div class="stat-line dim" id="sp-xg-note"></div>
+      </div>
+
+      <div class="stat-block-mini">
+        <div class="stat-mini-label">SPIELMOMENTUM</div>
+        <div class="momentum-chart" id="sp-momentum-chart"></div>
+        <div class="momentum-axis"><span>FCC-Druck</span><span>Gegner-Druck</span></div>
+        <div class="stat-mini-note">Vereinfachte Darstellung auf Basis der Spielberichte, keine offiziellen Provider-Werte.</div>
+      </div>
+
+      <div class="stat-block-mini">
+        <div class="stat-mini-label">SPIELVERLAUF</div>
+        <div id="sp-momentum"></div>
+      </div>
+
+      <div class="stat-topscorer">Pflichtspiel-Statistik (Tore/Vorlagen/MotM) startet mit dem 1. Spieltag am 26.07. — dieses Fenster hält aber schon jetzt alle Spielberichte fest, auch rückwirkend.</div>
+    </div>
+    <div class="resize-handle"></div>
+  </div>
+
+  <!-- STATISTIK -->
+  <div class="window" id="win-stats" style="left:1080px; top:400px; width:270px; height:330px;">
+    <div class="titlebar"><div class="ttl">🥅 Statistik.exe — Saisonwerte</div>
+      <div class="winbtns"><button onclick="minWin('win-stats')">_</button><button onclick="maxWin('win-stats', this)">□</button><button onclick="closeWin('win-stats')">✕</button></div></div>
+    <div class="menubar"><span>Datei</span><span>Saison 26/27</span></div>
+    <div class="content">
+      <div class="stat-match">
+        <div class="stat-head"><span>TOP-TORSCHÜTZEN</span></div>
+        <div class="stat-line dim">1. —</div>
+        <div class="stat-line dim">2. —</div>
+        <div class="stat-line dim">3. —</div>
+      </div>
+      <div class="stat-match" style="margin-top:8px;">
+        <div class="stat-head"><span>TOP-VORLAGENGEBER</span></div>
+        <div class="stat-line dim">1. —</div>
+        <div class="stat-line dim">2. —</div>
+        <div class="stat-line dim">3. —</div>
+      </div>
+      <div class="stat-match" style="margin-top:8px;">
+        <div class="stat-head"><span>MEISTE MOTM</span></div>
+        <div class="stat-line dim">— noch keine Auszeichnung</div>
+      </div>
+      <div class="stat-topscorer">Start der Erfassung mit dem 1. Spieltag am 26.07.2026 (FCC – FSV Zwickau).</div>
+    </div>
+    <div class="resize-handle"></div>
+  </div>
+
+  <!-- ARCHIV -->
+  <div class="window hidden" id="win-archiv" style="left:830px; top:610px; width:330px; height:220px;">
+    <div class="titlebar"><div class="ttl">🗑️ Saison_25-26.zip</div>
+      <div class="winbtns"><button onclick="minWin('win-archiv')">_</button><button onclick="maxWin('win-archiv', this)">□</button><button onclick="closeWin('win-archiv')">✕</button></div></div>
+    <div class="menubar"><span>Datei</span><span>Extrahieren</span></div>
+    <div class="content white">
+      <div class="archive-text">RUECKBLICK_25-26.TXT
+
+Endplatzierung ..... Platz 2 (Vizemeister)
+Punkte .............. gleich mit Meister
+Entscheidung ........ Torverhaeltnis
+Zuschauerrekord ..... 15.040 (Th.-Derby
+                      vs. RW Erfurt)
+Bilanz Rueckrunde ... zuletzt 5 Siege
+                      in Folge</div>
+    </div>
+    <div class="resize-handle"></div>
+  </div>
+
+</div>
+</div>
+
+<div id="startmenu">
+  <div class="smhead">FCC 95</div>
+  <div class="smitem" onclick="openWin('win-kader'); toggleStart(false)">🧾 Kader.exe</div>
+  <div class="smitem" onclick="openWin('win-aufstellung'); toggleStart(false)">⚽ Aufstellung.exe</div>
+  <div class="smitem" onclick="openWin('win-tabelle'); toggleStart(false)">📊 Tabelle.exe</div>
+  <div class="smitem" onclick="openWin('win-termine'); toggleStart(false)">🗓️ Termine.exe</div>
+  <div class="smitem" onclick="openWin('win-trikot'); toggleStart(false)">👕 Trikots.exe</div>
+  <div class="smitem" onclick="openWin('win-ticker'); toggleStart(false)">📡 Live-Feed.exe</div>
+  <div class="smitem" onclick="openWin('win-spieltage'); toggleStart(false)">📋 Spieltage.exe</div>
+  <div class="smitem" onclick="openWin('win-stats'); toggleStart(false)">🥅 Statistik.exe</div>
+  <hr>
+  <div class="smitem" onclick="openWin('win-archiv'); toggleStart(false)">🗑️ Saison_25-26.zip</div>
+</div>
+
+<div class="taskbar">
+  <div class="start-btn" onclick="toggleStart()"><span class="flag"></span>Start</div>
+  <div class="sep"></div>
+  <div class="task-item pressed" id="task-kader" onclick="toggleFromTaskbar('win-kader')">🧾 Kader</div>
+  <div class="task-item pressed" id="task-aufstellung" onclick="toggleFromTaskbar('win-aufstellung')">⚽ Aufstellung</div>
+  <div class="task-item pressed" id="task-trikot" onclick="toggleFromTaskbar('win-trikot')">👕 Trikots</div>
+  <div class="task-item pressed" id="task-tabelle" onclick="toggleFromTaskbar('win-tabelle')">📊 Tabelle</div>
+  <div class="task-item pressed" id="task-termine" onclick="toggleFromTaskbar('win-termine')">🗓️ Termine</div>
+  <div class="task-item pressed" id="task-ticker" onclick="toggleFromTaskbar('win-ticker')">📡 Live-Feed</div>
+  <div class="task-item pressed" id="task-spieltage" onclick="toggleFromTaskbar('win-spieltage')">📋 Spieltage</div>
+  <div class="task-item pressed" id="task-stats" onclick="toggleFromTaskbar('win-stats')">🥅 Statistik</div>
+  <div class="task-item hidden" id="task-archiv" onclick="toggleFromTaskbar('win-archiv')">🗑️ Archiv</div>
+  <div class="tray">
+    <span class="task-item" id="fullscreen-btn" onclick="toggleFullscreen()" title="Vollbild an/aus">⛶ Vollbild</span>
+    <span id="clock">--:--</span>
+  </div>
+</div>
+
+<script>
+  setTimeout(function(){ document.getElementById('bootfill').style.width='100%'; }, 80);
+  setTimeout(function(){ document.getElementById('boot').style.display='none'; }, 1500);
+
+  var spMatches = [
+    {
+      date: '12.07.2026',
+      comp: 'TESTSPIEL',
+      teams: 'FCC — Union Berlin',
+      score: '2:0',
+      scorers: ["11' Löder", "83' Lankford"],
+      reportUrl: 'https://www.kicker.de/jena-gegen-union-2026-vereine-freundschaftsspiele-5203221/spielbericht',
+      possFcc: 40,
+      possGeg: 60,
+      possGegLabel: 'Union Berlin',
+      possNote: 'Keine offizielle Gesamtquote erfasst — laut Berliner Zeitung hatte Union in Hälfte 2 zeitweise bis zu ~80% Ballbesitz, blieb dabei aber meist ungefährlich.',
+      shotsNote: 'n. v. — für Testspiele nicht systematisch erfasst',
+      xgNote: 'n. v. — xG/xA werden für Testspiele generell nicht erhoben',
+      momentumBars: [
+        { label:'0-15', val: 35 },
+        { label:'15-30', val: 15 },
+        { label:'30-45', val: 5 },
+        { label:'45-60', val: -25 },
+        { label:'60-75', val: -60 },
+        { label:'75-90', val: 30 }
+      ],
+      momentum: [
+        { min: "—", text: "Anstoß ca. 30 Min. verspätet (Unfall auf der A9)" },
+        { min: "11'", text: "1:0 Löder — Fehler im Berliner Spielaufbau bestraft" },
+        { min: "45'", text: "Halbzeit 1:0, ausgeglichenes Bild" },
+        { min: "46'", text: "Doppelwechsel bei FCC & komplette Elf bei Union getauscht" },
+        { min: "60-90'", text: "Union deutlich mehr Ballbesitz, aber meist ungefährlich" },
+        { min: "83'", text: "2:0 Lankford nach Konter" },
+        { min: "90'", text: "Abpfiff — FCC gewinnt 2:0" }
+      ]
+    }
+  ];
+  var spIndex = spMatches.length - 1;
+
+  function renderSpieltag(){
+    var m = spMatches[spIndex];
+    document.getElementById('sp-nav').textContent = 'SPIEL ' + (spIndex + 1) + ' VON ' + spMatches.length;
+    document.getElementById('sp-teams').textContent = m.teams;
+    document.getElementById('sp-comp').textContent = m.comp;
+    document.getElementById('sp-date').textContent = m.date;
+    document.getElementById('sp-score').textContent = m.score;
+    var box = document.getElementById('sp-scorers');
+    box.innerHTML = '';
+    m.scorers.forEach(function(s){
+      var d = document.createElement('div');
+      d.className = 'stat-line';
+      d.textContent = '⚽ ' + s;
+      box.appendChild(d);
+    });
+
+    var link = document.getElementById('sp-report-link');
+    link.innerHTML = '<a href="' + m.reportUrl + '" target="_blank" rel="noopener">📄 Spielbericht auf kicker.de ↗</a>';
+
+    document.getElementById('sp-poss-fcc').style.width = m.possFcc + '%';
+    document.getElementById('sp-poss-geg').style.width = m.possGeg + '%';
+    document.getElementById('sp-poss-geg-label').textContent = m.possGegLabel;
+    document.getElementById('sp-poss-note').textContent = m.possNote;
+    document.getElementById('sp-shots-note').textContent = m.shotsNote;
+    document.getElementById('sp-xg-note').textContent = m.xgNote;
+
+    var mChart = document.getElementById('sp-momentum-chart');
+    mChart.innerHTML = '';
+    m.momentumBars.forEach(function(seg){
+      var col = document.createElement('div');
+      col.className = 'momentum-col';
+      var bar = document.createElement('div');
+      var pct = Math.min(100, Math.abs(seg.val));
+      if(seg.val >= 0){
+        bar.className = 'bar fcc';
+        bar.style.height = pct + '%';
+      } else {
+        bar.className = 'bar geg';
+        bar.style.height = pct + '%';
+      }
+      col.appendChild(bar);
+      col.title = seg.label + ': ' + seg.val;
+      mChart.appendChild(col);
+    });
+
+    var mBox = document.getElementById('sp-momentum');
+    mBox.innerHTML = '';
+    m.momentum.forEach(function(item){
+      var row = document.createElement('div');
+      row.className = 'momentum-item';
+      row.innerHTML = '<span class="mm-min">' + item.min + '</span><span>' + item.text + '</span>';
+      mBox.appendChild(row);
+    });
+
+    document.getElementById('sp-prev').disabled = (spIndex <= 0);
+    document.getElementById('sp-next').disabled = (spIndex >= spMatches.length - 1);
+  }
+  function spNav(dir){
+    spIndex = Math.max(0, Math.min(spMatches.length - 1, spIndex + dir));
+    renderSpieltag();
+  }
+  renderSpieltag();
+
+  var auMatches = [
+    {
+      title: 'Testspiel FCC – Union Berlin, 12.07.2026 (2:0)',
+      note: 'Offizielle Startelf laut Vereinsgrafik. Munser (17) kam als NLZ-Talent ohne Kadereintrag zu seinem Einsatz.',
+      formation: [
+        { x:50, y:92, n:'1', name:'Liesegang' },
+        { x:15, y:74, n:'•', name:'Butzen' },
+        { x:38, y:76, n:'•', name:'Hessel' },
+        { x:62, y:76, n:'•', name:'Reddemann' },
+        { x:85, y:74, n:'•', name:'Talabidi' },
+        { x:15, y:48, n:'•', name:'Munser' },
+        { x:38, y:50, n:'•', name:'Ajvazi' },
+        { x:62, y:50, n:'•', name:'Burmeister' },
+        { x:85, y:48, n:'•', name:'Fritz' },
+        { x:37, y:20, n:'•', name:'Löder' },
+        { x:63, y:20, n:'•', name:'Wollschläger' }
+      ],
+      subs: [
+        "46' Lankford ↔ Munser",
+        "46' Eshele ↔ Wollschläger",
+        "60' Härting ↔ Liesegang",
+        "60' Hoppe ↔ Fritz",
+        "71' Teuber ↔ Burmeister",
+        "71' Walter ↔ Löder",
+        "84' Kratzenberg ↔ Butzen",
+        "84' Schoima ↔ Talabidi",
+        "90' Krämer ↔ Hessel"
+      ]
+    }
+  ];
+  var auIndex = auMatches.length - 1;
+
+  function renderAu(){
+    var m = auMatches[auIndex];
+    document.getElementById('au-nav').textContent = 'SPIEL ' + (auIndex + 1) + ' VON ' + auMatches.length;
+    document.getElementById('au-note').textContent = m.title + ' — ' + m.note;
+    var players = document.getElementById('au-players');
+    players.innerHTML = '';
+    m.formation.forEach(function(p){
+      var el = document.createElement('div');
+      el.className = 'player';
+      el.style.left = p.x + '%';
+      el.style.top = p.y + '%';
+      el.innerHTML = '<div class="dot">' + p.n + '</div><div class="lbl">' + p.name + '</div>';
+      players.appendChild(el);
+    });
+    var subsBox = document.getElementById('au-subs');
+    subsBox.innerHTML = '';
+    if(m.subs.length === 0){
+      subsBox.innerHTML = '<div class="subs-empty">wird ergänzt …</div>';
+    } else {
+      m.subs.forEach(function(s){
+        var d = document.createElement('div');
+        d.className = 'subs-row';
+        d.textContent = s;
+        subsBox.appendChild(d);
+      });
+    }
+    document.getElementById('au-prev').disabled = (auIndex <= 0);
+    document.getElementById('au-next').disabled = (auIndex >= auMatches.length - 1);
+  }
+  function auNav(dir){
+    auIndex = Math.max(0, Math.min(auMatches.length - 1, auIndex + dir));
+    renderAu();
+  }
+  renderAu();
+
+  function toggleFullscreen(){
+    if(!document.fullscreenElement){
+      document.documentElement.requestFullscreen().catch(function(err){
+        alert('Vollbild wird von diesem Frame nicht erlaubt. Lade die Datei herunter, öffne sie direkt im Browser und versuch es nochmal (oder F11 drücken).');
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  function tick(){
+    var now = new Date();
+    document.getElementById('clock').textContent =
+      now.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}) + ' · ' +
+      now.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'});
+  }
+  tick(); setInterval(tick, 10000);
+
+  var zTop = 10;
+  function idFromWin(id){ return id.replace('win-',''); }
+
+  function bringToFront(win){
+    zTop++;
+    win.style.zIndex = zTop;
+    document.querySelectorAll('.window').forEach(function(w){ w.classList.remove('active-win'); });
+    win.classList.add('active-win');
+    document.querySelectorAll('.task-item').forEach(function(t){ t.classList.remove('pressed'); });
+    var task = document.getElementById('task-'+idFromWin(win.id));
+    if(task){ task.classList.remove('hidden'); task.classList.add('pressed'); }
+  }
+
+  function openWin(id){
+    var win = document.getElementById(id);
+    win.classList.remove('hidden');
+    bringToFront(win);
+  }
+
+  function toggleFromTaskbar(id){
+    var win = document.getElementById(id);
+    if(win.classList.contains('hidden')){ openWin(id); }
+    else if(win.classList.contains('active-win')){ minWin(id); }
+    else { bringToFront(win); }
+  }
+
+  function minWin(id){
+    var win = document.getElementById(id);
+    win.classList.add('hidden');
+    win.classList.remove('active-win');
+    var task = document.getElementById('task-'+idFromWin(id));
+    if(task) task.classList.remove('pressed');
+  }
+
+  function closeWin(id){
+    var win = document.getElementById(id);
+    win.classList.add('hidden');
+    win.classList.remove('active-win');
+    var task = document.getElementById('task-'+idFromWin(id));
+    if(task) task.classList.add('hidden');
+  }
+
+  function maxWin(id, btn){
+    var win = document.getElementById(id);
+    var desktop = document.getElementById('desktop');
+    if(win.classList.contains('maxed')){
+      win.style.left = win.dataset.prevLeft;
+      win.style.top = win.dataset.prevTop;
+      win.style.width = win.dataset.prevWidth;
+      win.style.height = win.dataset.prevHeight;
+      win.classList.remove('maxed');
+      btn.textContent = '□';
+    } else {
+      win.dataset.prevLeft = win.style.left;
+      win.dataset.prevTop = win.style.top;
+      win.dataset.prevWidth = win.style.width;
+      win.dataset.prevHeight = win.style.height;
+      win.style.left = '0px';
+      win.style.top = '0px';
+      win.style.width = desktop.clientWidth + 'px';
+      win.style.height = '700px';
+      win.classList.add('maxed');
+      btn.textContent = '❐';
+    }
+    bringToFront(win);
+  }
+
+  function isMobile(){ return window.matchMedia('(max-width:760px)').matches; }
+
+  function makeDraggable(win){
+    var bar = win.querySelector('.titlebar');
+    bar.addEventListener('pointerdown', function(e){
+      if(e.target.closest('button')) return;
+      if(isMobile()) return;
+      bringToFront(win);
+      var startX = e.clientX, startY = e.clientY;
+      var startLeft = win.offsetLeft, startTop = win.offsetTop;
+      function onMove(ev){
+        win.style.left = (startLeft + ev.clientX - startX) + 'px';
+        win.style.top = Math.max(0, startTop + ev.clientY - startY) + 'px';
+      }
+      function onUp(){
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+      }
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+    });
+  }
+
+  function makeResizable(win){
+    var handle = win.querySelector('.resize-handle');
+    if(!handle) return;
+    handle.addEventListener('pointerdown', function(e){
+      e.stopPropagation();
+      if(isMobile()) return;
+      bringToFront(win);
+      var startX = e.clientX, startY = e.clientY;
+      var startW = win.offsetWidth, startH = win.offsetHeight;
+      function onMove(ev){
+        win.style.width = Math.max(220, startW + ev.clientX - startX) + 'px';
+        win.style.height = Math.max(120, startH + ev.clientY - startY) + 'px';
+      }
+      function onUp(){
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+      }
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+    });
+  }
+
+  document.querySelectorAll('.window').forEach(function(w){
+    makeDraggable(w);
+    makeResizable(w);
+    w.addEventListener('pointerdown', function(){ bringToFront(w); });
+  });
+
+  function toggleStart(force){
+    var sm = document.getElementById('startmenu');
+    var show = force !== undefined ? force : (sm.style.display !== 'block');
+    sm.style.display = show ? 'block' : 'none';
+  }
+  document.addEventListener('click', function(e){
+    if(!e.target.closest('#startmenu') && !e.target.closest('.start-btn')){
+      document.getElementById('startmenu').style.display = 'none';
+    }
+  });
+</script>
+<div id="screensaver" style="display:none; position:fixed; inset:0; z-index:9500; cursor:pointer; overflow:hidden;">
+  <div style="position:absolute; inset:0; background: repeating-linear-gradient(180deg, #123018 0 40px, #163a1d 40px 80px);"></div>
+  <div style="position:absolute; left:50%; top:0; bottom:0; width:2px; background:rgba(232,240,232,.35); transform:translateX(-50%);"></div>
+  <div style="position:absolute; left:50%; top:50%; width:140px; height:140px; margin:-70px 0 0 -70px; border:2px solid rgba(232,240,232,.35); border-radius:50%;"></div>
+
+  <div style="position:absolute; top:22px; left:50%; transform:translateX(-50%); font-family:'Courier New',monospace; background:#000; border:2px solid #f4c430; padding:8px 18px; display:flex; gap:12px; align-items:center; color:#f4c430; font-size:20px; font-weight:bold; letter-spacing:2px; box-shadow:0 0 14px rgba(244,196,48,.45); z-index:2;">
+    <span style="font-size:12px; color:#fff;">FCC</span>
+    <span id="ss-score">0:0</span>
+    <span style="font-size:12px; color:#fff;">GEGNER</span>
+  </div>
+
+  <div id="ss-flash" style="position:absolute; inset:0; background:#f4c430; opacity:0; transition:opacity .35s ease; pointer-events:none; z-index:3;"></div>
+
+  <svg id="ss-ball" viewBox="0 0 100 100" style="position:absolute; width:26px; height:26px; z-index:2; filter:drop-shadow(0 0 5px rgba(255,255,255,.6));">
+    <defs><clipPath id="ss-ball-clip"><circle cx="50" cy="50" r="46"/></clipPath></defs>
+    <circle cx="50" cy="50" r="46" fill="#f5f5f5" stroke="#111" stroke-width="3"/>
+    <g clip-path="url(#ss-ball-clip)" stroke="#111" stroke-width="3" fill="#111">
+      <polygon points="50,34 65.2,45.1 59.4,62.9 40.6,62.9 34.8,45.1"/>
+      <line x1="50" y1="34" x2="50" y2="4"/>
+      <line x1="65.2" y1="45.1" x2="93.7" y2="35.8"/>
+      <line x1="59.4" y1="62.9" x2="77.0" y2="87.2"/>
+      <line x1="40.6" y1="62.9" x2="23.0" y2="87.2"/>
+      <line x1="34.8" y1="45.1" x2="6.3" y2="35.8"/>
+      <circle cx="50" cy="4" r="6"/>
+      <circle cx="93.7" cy="35.8" r="6"/>
+      <circle cx="77.0" cy="87.2" r="6"/>
+      <circle cx="23.0" cy="87.2" r="6"/>
+      <circle cx="6.3" cy="35.8" r="6"/>
+    </g>
+  </svg>
+
+  <div id="ss-goal-left" style="position:absolute; left:0; top:50%; width:14px; border:2px solid rgba(232,240,232,.6); border-left:none; box-sizing:border-box;"></div>
+  <div id="ss-goal-right" style="position:absolute; right:0; top:50%; width:14px; border:2px solid rgba(232,240,232,.6); border-right:none; box-sizing:border-box;"></div>
+
+  <div style="position:absolute; bottom:18px; left:50%; transform:translateX(-50%); color:#8fae8f; font-family:'Courier New',monospace; font-size:11px; user-select:none; z-index:2;">FCC 95 · Bildschirmschoner läuft — Maus bewegen oder klicken zum Fortfahren</div>
+</div>
+
+<script>
+  var idleTimeout;
+  var IDLE_MS = 300000;
+  var ssRAF = null;
+  var ssX, ssY, ssVX, ssVY, ssScoreFCC, ssScoreGeg;
+
+  function ssResetBall(){
+    var dir = Math.random() < 0.5 ? 1 : -1;
+    var margin = 100;
+    ssX = margin + Math.random() * (window.innerWidth - margin * 2);
+    ssY = margin + Math.random() * (window.innerHeight - margin * 2);
+    var speed = 4.5;
+    var vertAngle = (Math.random() - 0.5) * 3;
+    ssVX = dir * speed;
+    ssVY = vertAngle;
+  }
+  function ssUpdateScore(){
+    document.getElementById('ss-score').textContent = ssScoreFCC + ':' + ssScoreGeg;
+  }
+  function ssGoalFlash(color){
+    var flash = document.getElementById('ss-flash');
+    var score = document.getElementById('ss-score');
+    flash.style.background = color;
+    flash.style.opacity = '0.35';
+    setTimeout(function(){ flash.style.opacity = '0'; }, 120);
+    score.classList.remove('pop');
+    void score.offsetWidth;
+    score.classList.add('pop');
+  }
+  var SS_GOAL_SIZE;
+  function showScreensaver(){
+    var el = document.getElementById('screensaver');
+    el.style.display = 'block';
+    SS_GOAL_SIZE = Math.min(220, window.innerHeight * 0.3);
+    var goalTop = (window.innerHeight - SS_GOAL_SIZE) / 2;
+    var gl = document.getElementById('ss-goal-left');
+    var gr = document.getElementById('ss-goal-right');
+    gl.style.top = goalTop + 'px';
+    gl.style.height = SS_GOAL_SIZE + 'px';
+    gr.style.top = goalTop + 'px';
+    gr.style.height = SS_GOAL_SIZE + 'px';
+    ssScoreFCC = 0; ssScoreGeg = 0;
+    ssUpdateScore();
+    ssResetBall();
+    animateSS();
+  }
+  function hideScreensaver(){
+    var el = document.getElementById('screensaver');
+    if(el) el.style.display = 'none';
+    if(ssRAF) cancelAnimationFrame(ssRAF);
+  }
+  var ssRotation = 0;
+  function animateSS(){
+    var ball = document.getElementById('ss-ball');
+    var w = ball.getBoundingClientRect().width || 26, h = ball.getBoundingClientRect().height || 26;
+    ssX += ssVX; ssY += ssVY;
+    ssRotation += (ssVX * 4) + (ssVY * 1.2);
+    if(ssY <= 0 || ssY + h >= window.innerHeight){ ssVY = -ssVY; }
+    var ballMidY = ssY + h / 2;
+    var goalTop = (window.innerHeight - SS_GOAL_SIZE) / 2;
+    var goalBottom = goalTop + SS_GOAL_SIZE;
+    var inGoalZone = (ballMidY >= goalTop && ballMidY <= goalBottom);
+    if(ssX <= 0){
+      if(inGoalZone){
+        ssScoreGeg++; ssUpdateScore(); ssGoalFlash('#c0392b'); ssResetBall();
+      } else {
+        ssVX = -ssVX; ssX = 0;
+      }
+    } else if(ssX + w >= window.innerWidth){
+      if(inGoalZone){
+        ssScoreFCC++; ssUpdateScore(); ssGoalFlash('#f4c430'); ssResetBall();
+      } else {
+        ssVX = -ssVX; ssX = window.innerWidth - w;
+      }
+    }
+    ball.style.left = ssX + 'px';
+    ball.style.top = ssY + 'px';
+    ball.style.transform = 'rotate(' + ssRotation + 'deg)';
+    ssRAF = requestAnimationFrame(animateSS);
+  }
+  function resetIdle(){
+    clearTimeout(idleTimeout);
+    hideScreensaver();
+    idleTimeout = setTimeout(showScreensaver, IDLE_MS);
+  }
+  ['mousemove','mousedown','keydown','touchstart','wheel'].forEach(function(evt){
+    document.addEventListener(evt, resetIdle);
+  });
+  document.getElementById('screensaver').addEventListener('click', resetIdle);
+  resetIdle();
+</script>
+</body>
+</html>
