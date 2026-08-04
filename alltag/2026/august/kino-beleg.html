@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Kassenbeleg – Cineworld Recklinghausen</title>
+<style>
+  * { box-sizing: border-box; }
+
+  html, body{
+    margin: 0;
+    padding: 0;
+    background: #999;
+    font-family: 'Courier New', Courier, monospace;
+    color: #111;
+  }
+
+  .page{
+    display: flex;
+    justify-content: center;
+    padding: 40px 12px 60px;
+  }
+
+  .receipt{
+    width: 300px;
+    background: #fdfdfb;
+    padding: 18px 16px 4px;
+    font-size: 12px;
+    line-height: 1.55;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+    position: relative;
+  }
+
+  .center{ text-align: center; }
+  .bold{ font-weight: 700; }
+  .upper{ text-transform: uppercase; }
+
+  .store-name{
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .store-sub{
+    font-size: 11px;
+    margin-top: 2px;
+  }
+
+  .rule{
+    border: none;
+    border-top: 1px dashed #333;
+    margin: 8px 0;
+  }
+
+  .rule-solid{
+    border: none;
+    border-top: 1px solid #333;
+    margin: 6px 0;
+  }
+
+  .row{
+    display: flex;
+    justify-content: space-between;
+    white-space: nowrap;
+  }
+  .row .l{ overflow: hidden; }
+  .row .r{ padding-left: 8px; }
+
+  .item{
+    margin-bottom: 3px;
+  }
+  .item .row{ font-size: 12px; }
+  .item .qty{
+    font-size: 11px;
+    color: #333;
+    padding-left: 8px;
+  }
+
+  .totals .row{ margin-bottom: 2px; }
+  .totals .grand{
+    font-size: 14px;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+
+  .meta{ font-size: 11px; }
+
+  .msg-block{
+    margin: 10px 0 4px;
+    text-align: center;
+    font-size: 11.5px;
+    line-height: 1.6;
+  }
+  .msg-block .stars{ letter-spacing: 2px; }
+
+  .barcode{
+    margin: 14px 0 2px;
+    height: 42px;
+    background: repeating-linear-gradient(
+      90deg,
+      #111 0px, #111 2px,
+      transparent 2px, transparent 3px,
+      #111 3px, #111 4px,
+      transparent 4px, transparent 7px,
+      #111 7px, #111 10px,
+      transparent 10px, transparent 12px,
+      #111 12px, #111 13px,
+      transparent 13px, transparent 16px
+    );
+  }
+  .barcode-num{
+    text-align: center;
+    font-size: 10.5px;
+    letter-spacing: 3px;
+    margin-top: 3px;
+    margin-bottom: 10px;
+  }
+
+  .tear{
+    height: 14px;
+    margin: 0 -16px;
+    background:
+      linear-gradient(135deg, #fdfdfb 50%, transparent 50%) 0 0,
+      linear-gradient(-135deg, #fdfdfb 50%, transparent 50%) 0 0;
+    background-size: 14px 14px;
+    background-repeat: repeat-x;
+    background-color: transparent;
+  }
+
+  .toolbar{
+    max-width: 300px;
+    margin: 0 auto 16px;
+    display: flex;
+    justify-content: center;
+  }
+  .print-btn{
+    font-family: Arial, sans-serif;
+    background: #111;
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  .print-btn:hover{ opacity: 0.85; }
+
+  @media print{
+    body{ background: #fff; }
+    .toolbar{ display: none; }
+    .page{ padding: 0; }
+    .receipt{ box-shadow: none; border-left: 1px solid #ccc; border-right: 1px solid #ccc; border-top: 1px solid #ccc; }
+    .tear{
+      border-bottom: 1px solid #ccc;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <div class="toolbar">
+    <button class="print-btn" onclick="window.print()">Beleg ausdrucken</button>
+  </div>
+
+  <div class="page">
+    <div class="receipt">
+
+      <div class="center store-name">CINEWORLD</div>
+      <div class="center store-sub">RECKLINGHAUSEN</div>
+      <div class="center meta">Kemnastr. 3 &middot; 45657 Recklinghausen</div>
+      <div class="center meta">Tel: 02361 931320</div>
+      <div class="center meta">USt-IdNr: DE255837320</div>
+
+      <hr class="rule-solid">
+
+      <div class="row meta">
+        <span class="l">Datum: 02.07.2026</span>
+        <span class="r">Zeit: 13:23</span>
+      </div>
+      <div class="row meta">
+        <span class="l">Kasse: ONLINE</span>
+        <span class="r">Bon-Nr: 048261</span>
+      </div>
+
+      <hr class="rule">
+
+      <div class="item">
+        <div class="row">
+          <span class="l bold upper">Kinoticket</span>
+        </div>
+        <div class="row">
+          <span class="l">SPIDER-MAN: BRAND NEW DAY</span>
+        </div>
+        <div class="row meta">
+          <span class="l">Vorstellung: 04.08.2026, 14:00 Uhr</span>
+        </div>
+        <div class="row meta">
+          <span class="l">Saal 1 &middot; Reihe G, Platz 13-14 &middot; 2D</span>
+        </div>
+        <div class="row meta">
+          <span class="l">Partnersitz</span>
+        </div>
+        <div class="row">
+          <span class="qty l">1 Stk x 10,50</span>
+          <span class="r bold">10,50 EUR</span>
+        </div>
+      </div>
+
+      <hr class="rule">
+
+      <div class="totals">
+        <div class="row">
+          <span class="l">Zwischensumme</span>
+          <span class="r">8,82 EUR</span>
+        </div>
+        <div class="row">
+          <span class="l">zzgl. MwSt 19%</span>
+          <span class="r">1,68 EUR</span>
+        </div>
+        <hr class="rule">
+        <div class="row grand">
+          <span class="l">GESAMT</span>
+          <span class="r">10,50 EUR</span>
+        </div>
+        <hr class="rule">
+        <div class="row meta">
+          <span class="l">BEZAHLT MIT PAYPAL</span>
+          <span class="r">10,50 EUR</span>
+        </div>
+        <div class="row meta">
+          <span class="l">Transaktion best&auml;tigt</span>
+          <span class="r">&#10003;</span>
+        </div>
+      </div>
+
+      <hr class="rule">
+
+      <div class="msg-block">
+        <div class="stars">* * * * * * * * * * * * * *</div>
+
+        <p style="margin: 8px 0 0; text-align: left;">
+          Ein tolles Erlebnis, Diva! Ich h&auml;tte diesen Film nicht besser erleben k&ouml;nnen!!
+        </p>
+
+        <svg width="90" height="52" viewBox="0 0 100 58" style="display:block; margin: 10px auto;">
+          <rect x="0" y="0" width="100" height="58" rx="10" fill="#B23A2E"/>
+          <g stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+            <path d="M40 21 L28 14 L28 6"/>
+            <path d="M39 27 L24 24 L20 18"/>
+            <path d="M39 33 L23 34 L18 40"/>
+            <path d="M43 39 L32 45 L28 52"/>
+            <path d="M60 21 L72 14 L72 6"/>
+            <path d="M61 27 L76 24 L80 18"/>
+            <path d="M61 33 L77 34 L82 40"/>
+            <path d="M57 39 L68 45 L72 52"/>
+          </g>
+          <circle cx="50" cy="19" r="6" fill="#111"/>
+          <path d="M50 25 L38 32 L38 42 L50 49 L62 42 L62 32 Z" fill="#111"/>
+        </svg>
+
+        <p style="margin: 8px 0 0; text-align: left;">
+          Von Chainsaw-Man (x2) &uuml;ber Die Drei Fragezeichen, The Drama, Glennkill und die Minions bis hin zu Spider-Man: ein Kino-Date mit Dir ist immer peak cinema &lt;3
+        </p>
+
+        <div class="stars" style="margin-top:10px;">* * * * * * * * * * * * * *</div>
+      </div>
+
+      <div class="center meta" style="margin-top:8px;">
+        VIELEN DANK FÜR IHREN BESUCH<br>BIS BALD IM CINEWORLD!
+      </div>
+
+      <div class="center" style="margin: 14px 0 2px;">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAT4AAAE+AQAAAAA8Q0GdAAADg0lEQVR4nO2bQW7jMAxFnyoDXcrAHKAXGUC+WTFHmhvIR+kN5GUBGn8WpNIuk0EHbTQ1jMBJuNAPxU/yU0niqut8uM4Ovg2/ruGRUkoLO+zLkc6VcwVI636mjWNLKaW03QmYay/1KilLWYqHjpWWJfUK1R/sHsDcZJjSxrGdKwv7a0qva+V45tiW0gw40vL5a/xYw2U87LnzmrDy+7GvWfvPHz0lrLTl09f4Lw3tSAs1d86VtPLYkVruX2qNH2U44rpXqUnyiIZqRbnXiPcJ43pPKQHL8bwc2+PLM8eWO48vG8CxnSml9bPX+MGGyC9363AupRnVSrMS38/la9QrkOUwdXnrKSxLQJ4QNZQmSR2KrAgwoEhOaP6D3AOYm3xtBPBRnARkCwOYD3UwdjMqEebNqO5oitTrlL52+pIakNWgOl7AOW1CNnPnFuVO7tU9bqXl7u52Sp8Oda8AVKMa5A5FuePPVmSlTRjXPaiM+AUqY1dnD21nvHsAc8sOb56ecq9WZGBvxC5JVjRjvq5WmjO2pEvOUq9ZTnF1QjbrlSJK87ysiOjgNAPNWaV4XDcbhYqVxshZQWXzoVaD4G2/oWa1cHRHU2YuObpKaV6fXPKXjcptyrg2iHoMvCSjyHnMtZQZd7hglGHRZnruRr36bbPt8AcgdxbquWLs6nBsWS09Ka37Agvklwn1cMMd2rIaRe5rRrkir0vvAcxtamEH8M46R+fl44Dx1YwVqRHDDs/RWfJCxYLVNSubUdrY4c01Q0nO7czpa0H1giRLDtxKvHpxPmG+VqO0UZSKoqzmYun7am0+1Hng9bfeWno/ok7uM/bXnWiuGRg9ul0sJaqX6VBXqXm/6dOuEP99/IGLSDPGNdVlEw/wSyLzjnvWHS616CipVkZZ3vF9bmXOfO0y6fBsvejhNvbAhLpZlGSKRtsbTGcwH3uV+ebXoZFSmisJQzwMjdSHm1Pma4ouopnUfJO7330eNGFceyE6MvUYWDdKGybzqQpvZxXGSKtd+mv3tSbNXHhzPRrqEMOJuiU2/D2AucWwSuLYFnYr7XwKZvNjZjbuewFz5RXHJuMISn0X1wqJmDkVpIHaJ/U1jiT10MZxVe0ewPydry8TLs/arhzOeVbh3ZnhHIOPmF/z1oZM5uuHOFt4pPFJfX36lV+ez5RcNDP2c/3sNX6wYfr+B8R/Y/gHY/HHGgR1yvEAAAAASUVORK5CYII=" width="140" height="140" alt="" style="display:block; margin: 0 auto;">
+      </div>
+
+      <div class="tear"></div>
+    </div>
+  </div>
+
+</body>
+</html>
